@@ -1,0 +1,13 @@
+﻿  main_app.cpp
+  imgui.cpp
+  imgui_demo.cpp
+  imgui_draw.cpp
+  imgui_impl_opengl3.cpp
+  imgui_impl_sdl3.cpp
+  imgui_tables.cpp
+  imgui_widgets.cpp
+  Matrix3x3.cpp
+  Matrix4x4.cpp
+  Quat.cpp
+  Generating Code...
+  Lab3_AffineTransforms.vcxproj -> C:\Users\usuari\Downloads\Lab3_AffineTransforms\Lab3_AffineTransforms\x64\Debug\Lab3_AffineTransforms.exe
