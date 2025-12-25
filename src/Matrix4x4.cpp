@@ -61,7 +61,14 @@ bool Matrix4x4::IsAffine() const
 
 Vec3 Matrix4x4::TransformPoint(const Vec3& p) const
 {
-    return Vec3{};
+    Vec4 v4(p.x, p.y, p.z, 1.0f);
+    Vec4 res = Multiply(v4);
+    if (std::abs(res.w) > TOL && std::abs(res.w - 1.0f) > TOL) {
+        float div = 1.0f / res.w;
+        return Vec3(res.x * div, res.y * div, res.z * div);
+    }
+    Vec3 result = Vec3(res.x, res.y, res.z);
+    return result;
 }
 
 Vec3 Matrix4x4::TransformVector(const Vec3& v) const
@@ -193,58 +200,164 @@ Matrix4x4 Matrix4x4::InverseTR() const
 
 Matrix4x4 Matrix4x4::InverseTRS() const
 {
-    Matrix4x4 M;
+    Matrix4x4 M; 
+    Vec3 s = GetScale();
+    Matrix3x3 R = GetRotation();
+    Vec3 t = GetTranslation();
+
+    Vec3 inversaesc;
+    if (std::abs(s.x) > TOL) {
+        inversaesc.x = 1.0 / s.x;
+    }
+    else {
+        inversaesc.x = 0.0;
+    }
+    if (std::abs(s.y) > TOL) {
+        inversaesc.y = 1.0 / s.y;
+    }
+    else {
+        inversaesc.y = 0.0;
+    }
+    if (std::abs(s.z) > TOL) {
+        inversaesc.z = 1.0 / s.z;
+    }
+    else {
+        inversaesc.z = 0.0;
+    }
+
+    Matrix3x3 inversarot = R.Transposed();
+
+    Matrix3x3 inversaRS;
+    for (int i = 0; i < 3; ++i) {
+        inversaRS.At(0, i) = inversarot.At(0, i) * inversaesc.x;
+        inversaRS.At(1, i) = inversarot.At(1, i) * inversaesc.y;
+        inversaRS.At(2, i) = inversarot.At(2, i) * inversaesc.z;
+    }
+
+    Vec3 invTrans = inversaRS.Multiply(t);
+    invTrans.x = -invTrans.x;
+    invTrans.y = -invTrans.y;
+    invTrans.z = -invTrans.z;
+
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            M.At(i, j) = inversaRS.At(i, j);
+        }
+    }
+
+    M.At(0, 3) = invTrans.x;
+    M.At(1, 3) = invTrans.y;
+    M.At(2, 3) = invTrans.z;
+    M.At(3, 3) = 1.0;
+
     return M;
 }
 
 Vec3 Matrix4x4::GetTranslation() const
 {
-    return Vec3{};
+    Vec3 result;
+    result = { (At(0, 3), At(1, 3), At(2, 3)) };
+    return result;
 }
 
 Matrix3x3 Matrix4x4::GetRotationScale() const
 {
     Matrix3x3 M;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            M.At(i, j) = At(i, j);
+        }
+    }
     return M;
 }
 
 Vec3 Matrix4x4::GetScale() const
 {
-	return Vec3{};
+    Vec3 X(At(0, 0), At(1, 0), At(2, 0));
+    Vec3 Y(At(0, 1), At(1, 1), At(2, 1));
+    Vec3 Z(At(0, 2), At(1, 2), At(2, 2));
+    Vec3 result(X.Norm(), Y.Norm(), Z.Norm());
+	return result;
 }
 
 Matrix3x3 Matrix4x4::GetRotation() const
 {
     Matrix3x3 M;
+    Vec3 s = GetScale();
+
+    if (std::abs(s.x) > TOL) {
+        M.At(0, 0) = At(0, 0) / s.x;
+        M.At(1, 0) = At(1, 0) / s.x;
+        M.At(2, 0) = At(2, 0) / s.x;
+    }
+
+    if (std::abs(s.y) > TOL) {
+        M.At(0, 1) = At(0, 1) / s.y;
+        M.At(1, 1) = At(1, 1) / s.y;
+        M.At(2, 1) = At(2, 1) / s.y;
+    }
+
+    if (std::abs(s.z) > TOL) {
+        M.At(0, 2) = At(0, 2) / s.z;
+        M.At(1, 2) = At(1, 2) / s.z;
+        M.At(2, 2) = At(2, 2) / s.z;
+    }
     return M;
 }
 
 Quat Matrix4x4::GetRotationQuat() const
 {
-	return Quat{};
+    Matrix3x3 M;
+    Quat R;
+    M = GetRotation();
+    R = Quat::FromMatrix3x3(M);
+	return R;
 }
 
 void Matrix4x4::SetTranslation(const Vec3& t)
 {
-    
+    At(0, 3) = t.x;
+    At(1, 3) = t.y;
+    At(2, 3) = t.z;
 }
 
 void Matrix4x4::SetScale(const Vec3& s)
 {
-    
+    Matrix3x3 M;
+    M = GetRotation();
+
+    double escala[3] = { s.x, s.y, s.z };
+
+    for (int j = 0; j < 3; ++j) {
+        for (int i = 0; i < 3; ++i) {
+            At(i, j) = M.At(i, j) * escala[j];
+        }
+    }
 }
 
 void Matrix4x4::SetRotation(const Matrix3x3& R)
 {
+    Vec3 s = GetScale();
+    double escala[3] = { s.x, s.y, s.z };
+
+    for (int j = 0; j < 3; ++j) {
+        for (int i = 0; i < 3; ++i) {
+            At(i, j) = R.At(i, j) * escala[j];
+        }
+    }
     
 }
 
 void Matrix4x4::SetRotation(const Quat& q)
 {
-   
+    SetRotation(q.ToMatrix3x3());
 }
 
 void Matrix4x4::SetRotationScale(const Matrix3x3& RS)
 {
-    
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            At(i, j) = RS.At(i, j);
+        }
+    }
 }
