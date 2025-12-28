@@ -73,22 +73,16 @@ Vec3 Matrix4x4::TransformPoint(const Vec3& p) const
 
 Vec3 Matrix4x4::TransformVector(const Vec3& v) const
 {
-    Vec4 v4(v.x, v.y, v.z, 1.0f);
+    Vec4 v4(v.x, v.y, v.z, 0.0f);
 
     Vec4 result = this->Multiply(v4);
-    if (std::abs(result.w) > TOL && std::abs(result.w - 1.0f) > TOL) {
-        float div = 1.0f / result.w;
-        return Vec3(result.x * div, result.y * div, result.z * div);
-    }
 
     return Vec3(result.x, result.y, result.z);
 }
 
 Matrix4x4 Matrix4x4::Translate(const Vec3& t)
 {
-    Matrix4x4 M;
-
-    M.Identity();
+    Matrix4x4 M = Matrix4x4::Identity();
 
     M.At(0,3) = t.x;
     M.At(1,3) = t.y;
@@ -99,8 +93,7 @@ Matrix4x4 Matrix4x4::Translate(const Vec3& t)
 
 Matrix4x4 Matrix4x4::Scale(const Vec3& s)
 {
-    Matrix4x4 M;
-    M.Identity();
+    Matrix4x4 M = Matrix4x4::Identity();
 
     M.At(0, 0) = s.x;  
     M.At(1, 1) = s.y;  
@@ -112,8 +105,7 @@ Matrix4x4 Matrix4x4::Scale(const Vec3& s)
 
 Matrix4x4 Matrix4x4::Rotate(const Matrix3x3& R)
 {
-    Matrix4x4 M;
-    M.Identity();
+    Matrix4x4 M = Matrix4x4::Identity();
 
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
@@ -180,6 +172,9 @@ Matrix4x4 Matrix4x4::FromTRS(const Vec3& t, const Quat& q, const Vec3& s)
 
 Matrix4x4 Matrix4x4::InverseTR() const
 {
+    if (!IsAffine()) {
+        throw std::runtime_error("La matriu no és afí");
+    }
     Matrix4x4 M;
     Matrix3x3 R;
     for (int i = 0; i < 3; ++i) {
@@ -200,6 +195,9 @@ Matrix4x4 Matrix4x4::InverseTR() const
 
 Matrix4x4 Matrix4x4::InverseTRS() const
 {
+    if (!IsAffine()) {
+        throw std::runtime_error("La matriu no és afí");
+    }
     Matrix4x4 M; 
     Vec3 s = GetScale();
     Matrix3x3 R = GetRotation();
@@ -255,6 +253,9 @@ Matrix4x4 Matrix4x4::InverseTRS() const
 
 Vec3 Matrix4x4::GetTranslation() const
 {
+    if (!IsAffine()) {
+        throw std::runtime_error("La matriu no és afí");
+    }
     Vec3 result;
     result = { (At(0, 3), At(1, 3), At(2, 3)) };
     return result;
@@ -262,6 +263,9 @@ Vec3 Matrix4x4::GetTranslation() const
 
 Matrix3x3 Matrix4x4::GetRotationScale() const
 {
+    if (!IsAffine()) {
+        throw std::runtime_error("La matriu no és afí");
+    }
     Matrix3x3 M;
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
@@ -273,6 +277,9 @@ Matrix3x3 Matrix4x4::GetRotationScale() const
 
 Vec3 Matrix4x4::GetScale() const
 {
+    if (!IsAffine()) {
+        throw std::runtime_error("La matriu no és afí");
+    }
     Vec3 X(At(0, 0), At(1, 0), At(2, 0));
     Vec3 Y(At(0, 1), At(1, 1), At(2, 1));
     Vec3 Z(At(0, 2), At(1, 2), At(2, 2));
@@ -282,6 +289,9 @@ Vec3 Matrix4x4::GetScale() const
 
 Matrix3x3 Matrix4x4::GetRotation() const
 {
+    if (!IsAffine()) {
+        throw std::runtime_error("La matriu no és afí");
+    }
     Matrix3x3 M;
     Vec3 s = GetScale();
 
@@ -307,6 +317,9 @@ Matrix3x3 Matrix4x4::GetRotation() const
 
 Quat Matrix4x4::GetRotationQuat() const
 {
+    if (!IsAffine()) {
+        throw std::runtime_error("La matriu no és afí");
+    }
     Matrix3x3 M;
     Quat R;
     M = GetRotation();
@@ -316,6 +329,9 @@ Quat Matrix4x4::GetRotationQuat() const
 
 void Matrix4x4::SetTranslation(const Vec3& t)
 {
+    if (!IsAffine()) {
+        throw std::runtime_error("La matriu no és afí");
+    }
     At(0, 3) = t.x;
     At(1, 3) = t.y;
     At(2, 3) = t.z;
@@ -323,6 +339,9 @@ void Matrix4x4::SetTranslation(const Vec3& t)
 
 void Matrix4x4::SetScale(const Vec3& s)
 {
+    if (!IsAffine()) {
+        throw std::runtime_error("La matriu no és afí");
+    }
     Matrix3x3 M;
     M = GetRotation();
 
@@ -337,6 +356,9 @@ void Matrix4x4::SetScale(const Vec3& s)
 
 void Matrix4x4::SetRotation(const Matrix3x3& R)
 {
+    if (!IsAffine()) {
+        throw std::runtime_error("La matriu no és afí");
+    }
     Vec3 s = GetScale();
     double escala[3] = { s.x, s.y, s.z };
 
@@ -350,11 +372,17 @@ void Matrix4x4::SetRotation(const Matrix3x3& R)
 
 void Matrix4x4::SetRotation(const Quat& q)
 {
+    if (!IsAffine()) {
+        throw std::runtime_error("La matriu no és afí");
+    }
     SetRotation(q.ToMatrix3x3());
 }
 
 void Matrix4x4::SetRotationScale(const Matrix3x3& RS)
 {
+    if (!IsAffine()) {
+        throw std::runtime_error("La matriu no és afí");
+    }
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
             At(i, j) = RS.At(i, j);
