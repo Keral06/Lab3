@@ -257,7 +257,7 @@ Vec3 Matrix4x4::GetTranslation() const
         throw std::runtime_error("La matriu no és afí");
     }
     Vec3 result;
-    result = { (At(0, 3), At(1, 3), At(2, 3)) };
+    result = { At(0, 3), At(1, 3), At(2, 3) };
     return result;
 }
 
